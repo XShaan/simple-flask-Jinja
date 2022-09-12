@@ -1,5 +1,6 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import requests
+import smtplib
 
 app = Flask(__name__)
 
@@ -17,6 +18,31 @@ def get_single(id):
         if blog_post["id"] == id:
             requested_post = blog_post
     return render_template("single.html", post=requested_post)
+
+
+@app.route("/contact", methods=['GET', 'POST'])
+def contact_us():
+    if request.method == 'POST':
+        data = request.form
+        send_email(data["name"], data["email"], data["phone"], data["message"])
+        return render_template("contact.html", alert=True)
+    else:
+        return render_template("contact.html")
+
+def send_email(name, email, phone, message):
+    sender = "Private Person <from@example.com>"
+    text = f"""\
+Subject:New mail from contact-us
+To: {email}
+From: {sender}
+
+Name: {name}\nEmail: {email}\nPhone: {phone}\nMessage:{message}"""
+
+## You can use Gmail SMTP service for now i use mailtrap.io
+    with smtplib.SMTP("smtp.mailtrap.io", 2525) as server:
+        server.login("YOUR USERNAME", "YOUR PASSWORD")
+        server.sendmail(sender, email, text)
+        print(server)
 
 if __name__ == "__main__":
     app.run(debug=True)
